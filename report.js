@@ -90,3 +90,39 @@ function buildReport(pa, pb, avatarElement) {
     lucky: { element: avatarElement, ...LUCKY_DATE[avatarElement] },
   };
 }
+
+// ---------- 솔로: 나와 잘 맞는 사람 ----------
+// compat.js 의 YUKHAP, SAMHAP, ANIMALS, STEMS, STEMS_KO, mbtiCompat, bloodCompat, MBTI_TYPES, BLOOD_ORDER 를 사용합니다.
+
+function idealMatch(me, pa, targetGender) {
+  const myBranch = pa.year.branch;
+  const zodiac = [];
+  for (let b = 0; b < 12; b++) {
+    if (b === myBranch) continue;
+    if (YUKHAP.has(pairKey(myBranch, b))) zodiac.unshift({ animal: ANIMALS[b], label: "육합" });
+    else if (SAMHAP.some((g) => g.includes(myBranch) && g.includes(b))) zodiac.push({ animal: ANIMALS[b], label: "삼합" });
+  }
+
+  const hapStem = (pa.day.stem + 5) % 10; // 천간합 짝
+  const mbti = MBTI_TYPES
+    .map((t) => ({ type: t, score: mbtiCompat(me.mbti, t).score }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+  const blood = BLOOD_ORDER
+    .map((t) => ({ type: t, score: bloodCompat(me.blood, t).score }))
+    .sort((a, b) => b.score - a.score)[0];
+
+  // 황금 키 차이(8~15cm) 기준. 같은 성별이거나 반대 방향이면 ±8cm
+  let height;
+  if (me.gender === "female" && targetGender === "male") height = `${me.height + 8}~${me.height + 15}cm`;
+  else if (me.gender === "male" && targetGender === "female") height = `${me.height - 15}~${me.height - 8}cm`;
+  else height = `${me.height - 8}~${me.height + 8}cm`;
+
+  return {
+    zodiac,
+    dayMaster: `${STEMS[hapStem]}(${STEMS_KO[hapStem]}) 일간`,
+    mbti,
+    blood,
+    height,
+  };
+}
