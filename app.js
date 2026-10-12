@@ -225,8 +225,23 @@ const detail = (title, item) => `
 const bar = (label, score) =>
   `<div><span>${label}</span><div class="bar"><i data-w="${score}"></i></div><b>${score}</b></div>`;
 
-const stageHTML = (title, avatar, gender, first) => `
-  <div class="stage${first ? " first" : ""}">
+const scoreHTML = (caption, total, grade, items) => `
+  ${caption ? `<p class="score-caption">${caption}</p>` : ""}
+  <div class="total">
+    <div class="ring">
+      <svg viewBox="0 0 120 120">
+        <circle class="ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
+        <circle class="ring-fg" cx="60" cy="60" r="52" fill="none" stroke-width="10"
+          stroke-dasharray="${RING_C}" stroke-dashoffset="${RING_C}"/>
+      </svg>
+      <div class="score"><span id="scoreNum">0</span><small>점</small></div>
+    </div>
+    <div class="grade">${grade}</div>
+  </div>
+  <div class="bars">${items.map((i) => bar(i.label, i.score)).join("")}</div>`;
+
+const stageHTML = (title, avatar, gender) => `
+  <div class="stage">
     <p class="stage-title">${title}</p>
     <p class="charm">매력 포인트 · ${avatar.charm}</p>
     <div class="avatar-wrap">${avatarSVG(avatar, gender)}</div>
@@ -284,10 +299,14 @@ function renderSolo(me, target) {
   const avatar = pickAvatar(target, pa);
   const ideal = idealMatch(me, pa, target);
   const report = buildReport(pa, pa, avatar.element);
+  const charm = soloCharm(pa);
   const elKo = `${ELEMENTS[avatar.element]}(${ELEMENTS_KO[avatar.element]})`;
 
   const html = `
-    ${stageHTML(`내 사주가 끌어당기는 인연 · <b>${avatar.type}</b>`, avatar, target, true)}
+    ${scoreHTML("💫 나의 인연 매력 지수", charm.total, charm.grade, charm.items)}
+    ${charm.dohwa ? `<p class="hint center">내 사주에 이성을 끄는 도화(桃花) 기운이 ${charm.dohwa}개 있어요</p>` : ""}
+
+    ${stageHTML(`내 사주가 끌어당기는 인연 · <b>${avatar.type}</b>`, avatar, target)}
 
     <h3>💘 나와 잘 맞는 사람</h3>
     <div class="match-grid">
@@ -323,7 +342,13 @@ function renderSolo(me, target) {
       ...pillarRows(pa),
     ], ["항목", "나"])}`;
 
-  return { html, run: () => revealAvatar(avatarLines(avatar), 14) };
+  return {
+    html,
+    run: async () => {
+      await revealScore(charm.total);
+      await revealAvatar(avatarLines(avatar), charm.total >= 76 ? 16 : 10);
+    },
+  };
 }
 
 // ---------- 커플 결과 ----------
@@ -335,23 +360,12 @@ function renderCouple(me, partner) {
   const report = buildReport(pa, pb, avatar.element);
 
   const html = `
-    <div class="total">
-      <div class="ring">
-        <svg viewBox="0 0 120 120">
-          <circle class="ring-bg" cx="60" cy="60" r="52" fill="none" stroke-width="10"/>
-          <circle class="ring-fg" cx="60" cy="60" r="52" fill="none" stroke-width="10"
-            stroke-dasharray="${RING_C}" stroke-dashoffset="${RING_C}"/>
-        </svg>
-        <div class="score"><span id="scoreNum">0</span><small>점</small></div>
-      </div>
-      <div class="grade">${r.grade}</div>
-    </div>
-    <div class="bars">
-      ${bar("사주 궁합", r.saju.score)}
-      ${bar("MBTI 궁합", r.mbti.score)}
-      ${bar("혈액형 궁합", r.blood.score)}
-      ${bar("체격 궁합", r.body.score)}
-    </div>
+    ${scoreHTML("", r.total, r.grade, [
+      { label: "사주 궁합", score: r.saju.score },
+      { label: "MBTI 궁합", score: r.mbti.score },
+      { label: "혈액형 궁합", score: r.blood.score },
+      { label: "체격 궁합", score: r.body.score },
+    ])}
 
     ${stageHTML(`내 사주에 부족한 <b>${ELEMENTS[avatar.element]}(${ELEMENTS_KO[avatar.element]})</b> 기운을 채워줄 <b>${avatar.type}</b>`, avatar, partner.gender)}
 

@@ -126,3 +126,30 @@ function idealMatch(me, pa, targetGender) {
     height,
   };
 }
+
+// ---------- 솔로: 인연 매력 지수 ----------
+// 연·월·일주 6글자의 오행 분포와 도화(子午卯酉)로 계산. 솔로 등급 문구는 모두 긍정적으로.
+// 점수 범위는 대략 61~87점이라 등급 기준을 분포(상위 15% / 35% / 35% / 15%)에 맞춤.
+const DOHWA = [0, 6, 3, 9]; // 子 午 卯 酉
+
+function soloCharm(pa) {
+  const c = countElements(pa);
+  const dohwa = [pa.year, pa.month, pa.day].filter((p) => DOHWA.includes(p.branch)).length;
+  const distinct = c.filter((n) => n > 0).length;
+  const score = (v) => Math.max(40, Math.min(100, v));
+
+  const items = [
+    { label: "매력", score: score(55 + dohwa * 12 + c[1] * 6) },
+    { label: "다정함", score: score(50 + (c[0] + c[4]) * 10) },
+    { label: "안정감", score: score(50 + (c[2] + c[3]) * 10) },
+    { label: "오행 균형", score: score(25 + distinct * 15) },
+  ];
+  const total = Math.round(items.reduce((s, i) => s + i.score, 0) / items.length);
+
+  let grade = "숨은 매력이 많은 사주 🌱";
+  if (total >= 81) grade = "인연이 줄을 서는 사주 💘";
+  else if (total >= 76) grade = "매력이 넘치는 사주 💖";
+  else if (total >= 71) grade = "천천히 빛나는 사주 💗";
+
+  return { total, grade, items, dohwa };
+}
