@@ -1,0 +1,10 @@
+# 크롤링 데이터 (다른 사이트 저작물이라 공개 저장소에 올리지 않음)
+data/
+crawler/crawl_log.txt
+
+# 비밀값
+.env
+
+# Python
+__pycache__/
+*.pyc
