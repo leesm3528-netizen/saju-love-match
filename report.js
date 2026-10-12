@@ -1,5 +1,5 @@
 // 연애 리포트: 사주 계산 결과로 직접 작성한 풀이 문구를 고릅니다.
-// compat.js 의 STEM_ELEMENT, ELEMENTS, pairKey, YUKHAP, SAMHAP, CHUNG, WONJIN, getPillars 를 사용합니다.
+// compat.js 의 STEM_ELEMENT, pairKey, STEM_HAP 을 사용합니다.
 
 // 1장. 일간 오행별 연애 스타일
 const LOVE_STYLE = [
@@ -60,17 +60,7 @@ const CHEMISTRY = {
 };
 const STEM_HAP_TEXT = "게다가 두 사람의 일간이 천간합을 이뤄요. 처음 만났을 때부터 묘하게 끌리는 인연이에요.";
 
-// 3장. 올해 띠 관계별 연애 흐름
-const YEAR_FLOW = {
-  yukhap: "올해의 기운과 내 띠가 육합을 이뤄요. 귀인이 다가오는 해라 소개팅·모임에 적극적으로 나가 보세요.",
-  samhap: "올해의 기운과 내 띠가 삼합을 이뤄요. 같은 목표를 가진 사람과 자연스럽게 가까워지는 흐름이에요.",
-  same: "올해가 바로 내 띠의 해예요. 존재감이 커지는 만큼 매력도 올라가지만, 고집은 조금 내려놓으세요.",
-  chung: "올해의 기운과 내 띠가 충돌해요. 변화가 많은 해라 오래된 관계는 점검이, 새 인연은 신중함이 필요해요.",
-  wonjin: "올해의 기운과 내 띠가 원진이에요. 사소한 오해가 생기기 쉬우니 연락과 대화를 평소보다 자주 해 주세요.",
-  normal: "올해는 큰 파도 없이 잔잔한 흐름이에요. 급하게 서두르기보다 지금 곁의 인연을 차분히 키우기 좋아요.",
-};
-
-// 4장. 부족한 오행을 채우는 행운의 데이트
+// 3장. 부족한 오행을 채우는 행운의 데이트
 const LUCKY_DATE = [
   { color: "초록", place: "공원·식물원 산책", food: "샐러드 브런치", item: "작은 화분" },
   { color: "레드·핑크", place: "야경 명소, 루프탑", food: "바비큐·매운 음식", item: "향초" },
@@ -78,9 +68,6 @@ const LUCKY_DATE = [
   { color: "화이트·실버", place: "전시회·미술관", food: "깔끔한 오마카세", item: "실버 액세서리" },
   { color: "네이비·블랙", place: "바다·수족관", food: "해산물, 따뜻한 차", item: "향수" },
 ];
-
-// 월지 → 양력 월 (寅월 ≈ 2월)
-const BRANCH_MONTH = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 function elementRelation(me, partner) {
   if (me === partner) return "same";
@@ -90,36 +77,16 @@ function elementRelation(me, partner) {
   return "follow";
 }
 
-function branchRelation(a, b) {
-  const key = pairKey(a, b);
-  if (a === b) return "same";
-  if (YUKHAP.has(key)) return "yukhap";
-  if (SAMHAP.some((g) => g.includes(a) && g.includes(b))) return "samhap";
-  if (CHUNG.has(key)) return "chung";
-  if (WONJIN.has(key)) return "wonjin";
-  return "normal";
-}
-
-function buildReport(pa, pb, avatarElement, today = new Date()) {
+function buildReport(pa, pb, avatarElement) {
   const myEl = STEM_ELEMENT[pa.day.stem];
   const partnerEl = STEM_ELEMENT[pb.day.stem];
 
   const chem = CHEMISTRY[elementRelation(myEl, partnerEl)];
   const hap = STEM_HAP.has(pairKey(pa.day.stem, pb.day.stem));
 
-  const year = today.getFullYear();
-  const yearBranch = getPillars(`${year}-06-01`).year.branch;
-  const myBranch = pa.year.branch;
-  const goodMonths = BRANCH_MONTH
-    .map((month, branch) => ({ month, rel: branchRelation(myBranch, branch) }))
-    .filter((m) => m.rel === "yukhap" || m.rel === "samhap")
-    .map((m) => m.month)
-    .sort((a, b) => a - b);
-
   return {
     style: { element: myEl, ...LOVE_STYLE[myEl] },
     chemistry: { ...chem, hap, hapText: hap ? STEM_HAP_TEXT : "" },
-    year: { year, animal: ANIMALS[yearBranch], text: YEAR_FLOW[branchRelation(myBranch, yearBranch)], goodMonths },
     lucky: { element: avatarElement, ...LUCKY_DATE[avatarElement] },
   };
 }
